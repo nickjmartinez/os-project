@@ -1,3 +1,9 @@
+#PDF
+*.pdf
+
+#Temp files
+.gitignore~
+
 # Prerequisites
 *.d
 
