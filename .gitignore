@@ -7,4 +7,8 @@
 #Object Files
 *.o
 
-/CGS_D3_D1/myshell
+*/myshell
+
+*/virtualdisk*
+
+!initialFiles/virtualdisk*
