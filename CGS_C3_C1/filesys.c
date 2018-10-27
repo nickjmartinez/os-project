@@ -129,8 +129,49 @@ MyFILE * myfopen(const char * filename, const char * mode){
 	MyFILE *fptr, file;
 	fptr = &file;
 	strcpy(file.mode, mode);
-	file.blockno = getNextFreeBlock();
+	
+	fatentry_t freebl = getNextFreeBlock();
+	file.blockno = freebl;
+	
+	direntry_t file_entry;
+	diskblock_t rootBlock = virtualDisk[rootDirIndex];
+	file_entry.isdir = 0;
+	file_entry.unused = 0;
+	file_entry.firstblock = freebl;
+	
 	return fptr;
+}
+
+void myfputc(int b, MyFILE * stream){
+	diskblock_t block = (*stream).buffer;
+	int wpos = myfgetc(stream);
+	
+	if(wpos == -1){	//end of file
+		//write current block to virtual disk
+		printf("Write error: Block %d full, writing to virtual disk",(*stream).blockno);
+		writeblock(&block, (*stream).blockno);
+		
+		//start a new block
+		printf("Making a new block!");
+		fatentry_t next = getNextFreeBlock();
+		FAT[(*stream).blockno] = next;
+		(*stream).blockno = next;
+		for(int i = 0; i < BLOCKSIZE; i++) block.data[i] = '\0';
+		(*stream).pos = 0;
+		wpos = myfgetc(stream);
+	}
+	block.data[wpos] = b;
+	(*stream).pos++;
+}
+
+void myfclose(MyFILE * stream){
+	diskblock_t block = (*stream).buffer;
+	writeblock(&block, (*stream).blockno);
+}
+
+int myfgetc(MyFILE * stream){
+	if((*stream).pos < BLOCKSIZE) return (*stream).pos;
+	else return ENDOF;
 }
 
 fatentry_t getNextFreeBlock(){

@@ -105,6 +105,9 @@ void writedisk ( const char * filename ) ;
 void copyFAT();
 MyFILE * myfopen(const char * filename, const char * mode);
 fatentry_t getNextFreeBlock();
+void myfputc(int b, MyFILE * stream);
+int myfgetc(MyFILE * stream);
+void myfclose(MyFILE * stream);
 
 #endif
 
