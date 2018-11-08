@@ -106,7 +106,7 @@ typedef struct filedescriptor {
 void format() ;
 void writedisk ( const char * filename ) ;
 void copyFAT();
-MyFILE * myfopen(const char * filename, const char * mode);
+MyFILE * myfopen(MyFILE * file, const char * filename, const char * mode);
 fatentry_t getNextFreeBlock();
 void myfputc(int b, MyFILE * stream);
 int myfgetc(MyFILE * stream);

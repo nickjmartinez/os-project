@@ -129,18 +129,16 @@ void copyFAT(){
 }
 
 //open a file and return a MyFILE object with parameters set
-MyFILE * myfopen(const char * filename, const char * mode){
+MyFILE * myfopen(MyFILE * file, const char * filename, const char * mode){
 	//initialize pointer to object
-	MyFILE *fptr, file;
-	fptr = &file;
 	
 	//copy in the passed in mode
-	strcpy(file.mode, mode);
+	strcpy((*file).mode, mode);
 
 	//get the next free block in FAT
 	fatentry_t freebl = getNextFreeBlock();
-	file.blockno = freebl;
-	file.pos = 0;
+	(*file).blockno = freebl;
+	(*file).pos = 0;
 	//file.filelength = 0;
 
 	//set up a new dir entry
@@ -168,10 +166,10 @@ MyFILE * myfopen(const char * filename, const char * mode){
 	//memmove(&rootBlock.entrylist[entryPos], e, sizeof(direntry_t));
 
 	//store the place in the directory of the file
-	file.posInDir = entryPos;	
+	(*file).posInDir = entryPos;	
 	
 	//return this pointer
-	return fptr;
+	return file;
 }
 
 void myfputc(int b, MyFILE * stream){
@@ -214,7 +212,7 @@ void myfclose(MyFILE * stream){
 	
 	//writeblock(&root, rootDirIndex);
 
-	//printf("Length was: %d\n",(*stream).filelength);
+	printf("Length was: %d\n",(*stream).blockno);
 }
 
 //take in a file and return the next byte

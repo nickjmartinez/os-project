@@ -1,5 +1,6 @@
 #include "filesys.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(){
 	format();
@@ -16,7 +17,6 @@ int main(){
 	(*file).blockno++;
 	printf("Block Number: %d\n",(*file).blockno);
 	*/
-	
 	char fileContents [4*BLOCKSIZE];
 	char *alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	int findex, aindex = 0;
@@ -30,7 +30,9 @@ int main(){
 		}
 	}
 	
-	MyFILE * file = myfopen("test.txt","w");
+	MyFILE * file;
+	file = malloc(sizeof(MyFILE));
+	file = myfopen(file, "test.txt", "w");
 
 	for(int i = 0; i < 4*BLOCKSIZE; i++){
 		myfputc(fileContents[i], file);
