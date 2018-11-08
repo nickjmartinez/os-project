@@ -26,7 +26,7 @@ void writedisk ( const char * filename )
 	printf ( "writedisk> virtualdisk[0] = %s\n", virtualDisk[0].data ) ;
 	FILE * dest = fopen( filename, "w" ) ;
 	if ( fwrite ( virtualDisk, sizeof(virtualDisk), 1, dest ) < 0 )
-      fprintf ( stderr, "write virtual disk to disk failed\n" ) ;
+	  fprintf ( stderr, "write virtual disk to disk failed\n" ) ;
 	//write( dest, virtualDisk, sizeof(virtualDisk) ) ;
 	fclose(dest) ;
    
@@ -80,13 +80,13 @@ void format ( )
 	int         fatentry        = 0 ;
 	int         fatblocksneeded =  (MAXBLOCKS / FATENTRYCOUNT ) ;
 
-   	/* prepare block 0 : fill it with '\0',
-     * use strcpy() to copy some text to it for test purposes
+	/* prepare block 0 : fill it with '\0',
+	 * use strcpy() to copy some text to it for test purposes
 	 * write block 0 to virtual disk
 	 */
 	for(int i=0; i < BLOCKSIZE; i++) block.data[i] = '\0';
 	strcpy(block.data, "Nicks CS3026 Assessment");
-	
+
 	writeblock(&block,0);
 
 	/* prepare FAT table
@@ -97,7 +97,7 @@ void format ( )
 	FAT[1] = 2;
 	FAT[2] = ENDOFCHAIN;
 	FAT[3] = ENDOFCHAIN;
-	
+
 	copyFAT();
 	/* prepare root directory
 	 * write root directory block to virtual disk
@@ -106,51 +106,79 @@ void format ( )
 	for(int i = 0; i < BLOCKSIZE; i++) rootBlock.data[i] = '\0';
 	rootBlock.dir.isdir = 1;
 	rootBlock.dir.nextEntry = 0;
-	
+
 	writeblock(&rootBlock, 3);
-	
+
 	rootDirIndex = 3;
 }
 
-void copyFAT()
-{
-	int numberOfFATBlocks = (MAXBLOCKS / FATENTRYCOUNT );
+//copy the FAT table to virtual disk
+void copyFAT(){
+	//set the place in the virtual disk to store FAT
 	int startingBlockOfFAT = 1;
-	for(int i = 0; i < numberOfFATBlocks; i++){
+	//cycle through the number of blocks needed
+	for(int i = 0; i < FATBLOCKSNEEDED; i++){
+		//initialize a block and copy contents into it
 		diskblock_t FATblock;
 		for(int j = 0; j < FATENTRYCOUNT; j++){
 			FATblock.fat[j] = FAT[j+i*FATENTRYCOUNT] ;		
 		}
+		//write the block to virtualdisk
 		writeblock(&FATblock, startingBlockOfFAT + i);
 	}
 }
 
+//open a file and return a MyFILE object with parameters set
 MyFILE * myfopen(const char * filename, const char * mode){
+	//initialize pointer to object
 	MyFILE *fptr, file;
 	fptr = &file;
-	strcpy(file.mode, mode);
 	
+	//copy in the passed in mode
+	strcpy(file.mode, mode);
+
+	//get the next free block in FAT
 	fatentry_t freebl = getNextFreeBlock();
 	file.blockno = freebl;
+
+	//set up a new dir entry
+	direntry_t *e, entry;
+	e = &entry;
+	entry.entrylength = 0;
+	entry.isdir = 0;
+	entry.unused = 0;
+	entry.modtime = 0;
+	entry.filelength = 0;
+	entry.firstblock = freebl;
+	//clear out the name array
+	for(int i = 0; i < MAXNAME; i++) entry.name[i] = '\0';
+	strcpy(entry.name, filename);
+
+	//get the root block from the virtual disk and the next free position
+	dirblock_t rootBlock = virtualDisk[rootDirIndex].dir;
+	int entryPos = rootBlock.nextEntry;
+
+	//move this new entry into the entry list of root block
+	//******************** Maybe add pathing here?**************
+	memmove(&rootBlock.entrylist[entryPos], e, sizeof(direntry_t));
+
+	//store the place in the directory of the file and incriment the next value
+	file.posInDir = entryPos;	
+	rootBlock.nextEntry+=1;
 	
-	direntry_t file_entry;
-	diskblock_t rootBlock = virtualDisk[rootDirIndex];
-	file_entry.isdir = 0;
-	file_entry.unused = 0;
-	file_entry.firstblock = freebl;
-	
+	//return this pointer
 	return fptr;
 }
 
 void myfputc(int b, MyFILE * stream){
 	diskblock_t block = (*stream).buffer;
 	int wpos = myfgetc(stream);
-	
+
 	if(wpos == -1){	//end of file
 		//write current block to virtual disk
 		printf("Write error: Block %d full, writing to virtual disk",(*stream).blockno);
 		writeblock(&block, (*stream).blockno);
-		
+	
 		//start a new block
 		printf("Making a new block!");
 		fatentry_t next = getNextFreeBlock();
@@ -174,13 +202,17 @@ int myfgetc(MyFILE * stream){
 	else return ENDOF;
 }
 
+//returns the next free block in FAT
 fatentry_t getNextFreeBlock(){
+	//cycle through FAT until we reach an unused entry
 	int i = 0;
-	while(FAT[i] != -1){
+	while(FAT[i] != UNUSED){
 		i++;
 	}
-	FAT[i] = 0;
+	//set the entry to ENDOFCHAIN
+	FAT[i] = ENDOFCHAIN;
 	printf("Next free block was %d\n",i);
+	//return the index of this free entry
 	return (fatentry_t) i;
 }
 /* use this for testing
@@ -188,6 +220,6 @@ fatentry_t getNextFreeBlock(){
 
 void printBlock ( int blockIndex )
 {
-   printf ( "virtualdisk[%d] = %s\n", blockIndex, virtualDisk[blockIndex].data ) ;
+	printf ( "virtualdisk[%d] = %s\n", blockIndex, virtualDisk[blockIndex].data ) ;
 }
 

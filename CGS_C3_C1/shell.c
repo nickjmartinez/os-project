@@ -19,6 +19,7 @@ int main(){
 	printf("Block Number: %d\n",(*file).blockno);
 	*/
 	
+/*
 	char fileContents [4*BLOCKSIZE];
 	char *alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	int findex, aindex = 0;
@@ -31,7 +32,9 @@ int main(){
 			findex++;
 		}
 	}
-	
-	
+*/	
+	//printf("Storage size for int : %d \n", sizeof(direntry_t));
+	format();
+	writedisk("virtualdiskD3_D1");
 	return 0;
 }
