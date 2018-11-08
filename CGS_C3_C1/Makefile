@@ -1,11 +1,13 @@
 CC = gcc
 CFlags = -c -std=c99
+hex = hexdump -C 
+diskName = virtualdiskC3_C1
 
 outputName = myshell
 
-all: myshell
+all: program
 
-myshell: filesys.o shell.o
+program: clean filesys.o shell.o
 	$(CC) -o $(outputName) shell.o filesys.o
 
 filesys.o: filesys.c filesys.h
@@ -17,5 +19,12 @@ shell.o: shell.c
 clean: 
 	rm -f myshell
 	rm -f *.o
+
 cleandisk:
 	rm -f virtualdisk*
+
+hex: cleandisk run
+	$(hex) $(diskName)	
+
+run: program
+	./$(outputName)

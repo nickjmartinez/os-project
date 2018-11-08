@@ -2,9 +2,7 @@
 #include <stdio.h>
 
 int main(){
-	//format();
-	//writedisk("virtualdiskD3_D1");
-	
+	format();
 	/*
 	char *test = "ABC";
 	
@@ -19,7 +17,6 @@ int main(){
 	printf("Block Number: %d\n",(*file).blockno);
 	*/
 	
-/*
 	char fileContents [4*BLOCKSIZE];
 	char *alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	int findex, aindex = 0;
@@ -32,9 +29,14 @@ int main(){
 			findex++;
 		}
 	}
-*/	
-	//printf("Storage size for int : %d \n", sizeof(direntry_t));
-	format();
-	writedisk("virtualdiskD3_D1");
+	
+	MyFILE * file = myfopen("test.txt","w");
+
+	for(int i = 0; i < 4*BLOCKSIZE; i++){
+		myfputc(fileContents[i], file);
+	}
+	myfclose(file);
+
+	writedisk("virtualdiskC3_C1");
 	return 0;
 }

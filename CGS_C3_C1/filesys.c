@@ -140,6 +140,8 @@ MyFILE * myfopen(const char * filename, const char * mode){
 	//get the next free block in FAT
 	fatentry_t freebl = getNextFreeBlock();
 	file.blockno = freebl;
+	file.pos = 0;
+	//file.filelength = 0;
 
 	//set up a new dir entry
 	direntry_t *e, entry;
@@ -155,16 +157,18 @@ MyFILE * myfopen(const char * filename, const char * mode){
 	strcpy(entry.name, filename);
 
 	//get the root block from the virtual disk and the next free position
-	dirblock_t rootBlock = virtualDisk[rootDirIndex].dir;
-	int entryPos = rootBlock.nextEntry;
-
+	diskblock_t rootBlock = virtualDisk[rootDirIndex];
+	int entryPos = rootBlock.dir.nextEntry;
+	
+	rootBlock.dir.entrylist[entryPos] = entry;
+	rootBlock.dir.nextEntry++;
+	writeblock(&rootBlock,rootDirIndex);
 	//move this new entry into the entry list of root block
 	//******************** Maybe add pathing here?**************
-	memmove(&rootBlock.entrylist[entryPos], e, sizeof(direntry_t));
+	//memmove(&rootBlock.entrylist[entryPos], e, sizeof(direntry_t));
 
-	//store the place in the directory of the file and incriment the next value
+	//store the place in the directory of the file
 	file.posInDir = entryPos;	
-	rootBlock.nextEntry+=1;
 	
 	//return this pointer
 	return fptr;
@@ -172,34 +176,50 @@ MyFILE * myfopen(const char * filename, const char * mode){
 
 void myfputc(int b, MyFILE * stream){
 	diskblock_t block = (*stream).buffer;
-	int wpos = myfgetc(stream);
+	
+	int i = (*stream).pos;
 
-	if(wpos == -1){	//end of file
+	if(i >= BLOCKSIZE){	//end of file
 		//write current block to virtual disk
-		printf("Write error: Block %d full, writing to virtual disk",(*stream).blockno);
+		printf("Write error: Block %d full, writing to virtual disk\n",(*stream).blockno);
 		writeblock(&block, (*stream).blockno);
 	
 		//start a new block
-		printf("Making a new block!");
 		fatentry_t next = getNextFreeBlock();
+		//update the FAT chain
 		FAT[(*stream).blockno] = next;
+		copyFAT();
+		//set the new block index
 		(*stream).blockno = next;
+		//wipe our block
 		for(int i = 0; i < BLOCKSIZE; i++) block.data[i] = '\0';
+		//reset our position
 		(*stream).pos = 0;
-		wpos = myfgetc(stream);
+		i = 0;
 	}
-	block.data[wpos] = b;
+	//write the byte to the buffer
+	block.data[i] = b;
+	//incriement the filelength and position in file
+	//(*stream).filelength++;
 	(*stream).pos++;
 }
 
 void myfclose(MyFILE * stream){
+	//when closing the file, write out the buffer to disk
 	diskblock_t block = (*stream).buffer;
 	writeblock(&block, (*stream).blockno);
+	
+	//diskblock_t root = virtualDisk[rootDirIndex];
+	//root.dir.entrylist[(*stream).posInDir].filelength = (*stream).filelength;
+	
+	//writeblock(&root, rootDirIndex);
+
+	//printf("Length was: %d\n",(*stream).filelength);
 }
 
+//take in a file and return the next byte
 int myfgetc(MyFILE * stream){
-	if((*stream).pos < BLOCKSIZE) return (*stream).pos;
-	else return ENDOF;
+	
 }
 
 //returns the next free block in FAT
