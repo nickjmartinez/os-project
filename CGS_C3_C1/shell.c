@@ -31,8 +31,7 @@ int main(){
 	}
 	
 	MyFILE * file;
-	file = malloc(sizeof(MyFILE));
-	file = myfopen(file, "test.txt", "w");
+	file = myfopen("test.txt", "w");
 
 	for(int i = 0; i < 4*BLOCKSIZE; i++){
 		myfputc(fileContents[i], file);

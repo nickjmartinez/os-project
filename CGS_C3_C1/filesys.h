@@ -97,7 +97,7 @@ typedef struct filedescriptor {
 	fatentry_t  blockno ;           // block no
 	int         pos     ;           // byte within a block
 	int			posInDir;
-	//int 		filelength;
+	int 		filelength;
 	diskblock_t buffer  ;
 } MyFILE ;
 
@@ -106,7 +106,7 @@ typedef struct filedescriptor {
 void format() ;
 void writedisk ( const char * filename ) ;
 void copyFAT();
-MyFILE * myfopen(MyFILE * file, const char * filename, const char * mode);
+MyFILE * myfopen(const char * filename, const char * mode);
 fatentry_t getNextFreeBlock();
 void myfputc(int b, MyFILE * stream);
 int myfgetc(MyFILE * stream);
